@@ -27,7 +27,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     
     db.OpenDatabase()
         
-    t, _ := template.ParseFiles("indexTemplate.html")
+    t, _ := template.ParseFiles("indexTemplate.template")
     t.Execute(w, Diagrams{WindSpeed:template.HTML( svgo1.WindSpeedDial()),
                           WindDir:template.HTML(svgo1.WindDial()),
                           Temperature:template.HTML(svgo1.TempDial()),
