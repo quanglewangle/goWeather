@@ -1,0 +1,184 @@
+package svgo1
+
+import (
+  
+  "db"
+   "math"
+   "bytes"
+   "fmt"
+   "github.com/ajstarks/svgo"
+  
+)
+
+const textStyle string =  "font-style:normal; font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;text-align:center;text-anchor:middle;stroke:none;fill-opacity:1; ";
+const textReadingStyle string = "font-size:12px;font-weight: bold;fill: #ee3333;	fill-opacity:0.9"
+	
+const circleStyle string = 	  "fill:none;stroke:black"
+const cardinal_point_style string = "font-size:20px;font-weight: bold;	fill: #dcff85"
+const intermediate_point_style string = "font-size:16px;font-weight: bold;	fill:  #dcff85"
+const pointerShaftSyle string = "fill: #dcff85;	fill-opacity:1;	stroke: #303030;stroke-width:0.5;stroke-opacity:1;"
+
+
+const pointerCircleStyle string = "opacity:1; fill:#303030; fill-opacity:1; fill-rule:nonzero; stroke:black;"
+const pointerShaftInnerStyle string = "fill: #303030;stroke:black;stroke-width:0.3;stroke-opacity:1;"
+const bgRectStyle string = "fill:black; stroke: none;"
+const bezelStyle string = "stroke-width:5.0; stroke: #505050"
+const screwStyle string = "stroke-width:1.5; stroke: #AAAAAA"
+
+const size  		float64    = 200            	// The size of the image - must be divisible by 2
+const cx    		float64    = size/2       	 	// x coordinate of the center
+const cy   			float64    = cx             	// y coordinate of the center
+const bezelR		int	   =    86
+const screwOffset   int    =    16
+
+const pointerLength float32  	= 65	            // Poninter length
+const pointerWidth  float32   	= 4            	// width of the pointer
+const inPointerLength float32 	= 30             	// length of the inner part of the shaft
+const rPointerCircle  float32 	 = 15             	// Radius of the pointer inner circle
+
+
+const rCardinalPoint float32  	= 36              	// Radius of the circumference for the cardinal points
+const xShadowOffset float32   	= 7	             	// x offset for the pointer shadow
+const yShadowOffset float32   	= 7	             	// y offset for the pointer shadow
+
+// Labels
+
+const yVariable   float64     = 1.29*cy        // Position of the variable label (Wind)
+const yCopyright  float64     = 0.83*cy        // Position of the text for the author
+const yReading    float64     = 1.45*cy        // Position of the text for the speed
+const yUnit       float64     = 1.7 *cy        // Position of the text for the units
+
+var cachedWindDir float64 = 0.0
+
+
+func WindDial(windDir float64) string {
+	  
+   buf := new(bytes.Buffer)
+
+  s := svg.New(buf)
+
+  s.Start(500, 500)
+    //s.Translate(100, 100)
+      windDir = db.GetWind()
+      compassDial(s, "Wind", windDir)
+     
+      pointer(s, cx, cy, windDir, cachedWindDir)
+      cachedWindDir = windDir
+
+      screw(s, screwOffset, screwOffset)
+      screw(s, int(size)-screwOffset, screwOffset)
+      screw(s, screwOffset, int(size)-screwOffset)
+      screw(s, int(size)-screwOffset, int(size)-screwOffset)
+     
+  s.End()
+  return string(buf.String())
+}
+
+func screw(s *svg.SVG, x int, y int){
+	s.Circle(x, y, 5, screwStyle);
+}
+
+/* compassDial -- draw frame and dial. Write directions */
+func compassDial(s *svg.SVG, unit string,  reading float64){
+    s.Roundrect(0,0, int(size), int(size), 20, 20, bgRectStyle)
+    s.Circle(int(cx), int(cy), int(bezelR), bezelStyle)
+    s.Gstyle(textStyle)
+    s.Text(int(cx), int( yVariable), unit, textReadingStyle)
+    s.Text(int(cx), int( yReading), fmt.Sprintf("%03.f", reading), textReadingStyle)
+  
+    s.Text(int(cx), int(rCardinalPoint), "N", cardinal_point_style)
+    s.Translate(int(cx), int(cy)) // fake rotate about a point with trans, rotate, trans -ve
+   
+       s.RotateTranslate(-int(cx), -int(cy), 90.0)
+       s.Text(int(cx), int(rCardinalPoint), "E", cardinal_point_style)
+       s.Gend()
+        s.RotateTranslate(-int(cx), -int(cy), 180.0)
+       s.Text(int(cx), int(rCardinalPoint), "S", cardinal_point_style)
+       s.Gend() 
+       s.RotateTranslate(-int(cx), -int(cy), 270.0)
+       s.Text(int(cx), int(rCardinalPoint), "W", cardinal_point_style)
+       s.Gend() 
+       
+       s.RotateTranslate(-int(cx), -int(cy), 45.0)
+       s.Text(int(cx), int(rCardinalPoint), "NE", intermediate_point_style)
+       s.Gend()
+       
+        s.RotateTranslate(-int(cx), -int(cy), 135.0)
+       s.Text(int(cx), int(rCardinalPoint), "SE", intermediate_point_style)
+       s.Gend()
+       
+        s.RotateTranslate(-int(cx), -int(cy), 225.0)
+       s.Text(int(cx), int(rCardinalPoint), "SW", intermediate_point_style)
+       s.Gend()
+       
+        s.RotateTranslate(-int(cx), -int(cy), 315.0)
+       s.Text(int(cx), int(rCardinalPoint), "NW", intermediate_point_style)
+       s.Gend()
+       
+       
+     s.Gend() // Translate
+    s.Gend() // Gstyle
+ }
+
+
+/* pointer that rotates about cx cy. angles are 000 (north) based */
+func pointer(s *svg.SVG , fcx float64, fcy float64, rotateTo float64, rotateFrom float64){
+    
+    var tip int			= 4  // extent of pointy bit
+    var halfWidth int   = 4
+    
+    // done all the positioning cacls now
+    var cx int = int(math.Trunc(fcx))
+    var cy int = int(math.Trunc(fcy))
+    
+    // make it take the shortest route
+    if(math.Abs(rotateFrom-rotateTo) > 180.0) {
+    	if(rotateFrom > 180.0){
+    	    rotateFrom = toAntiClock(rotateFrom)
+    	} else {
+    	    rotateTo = toAntiClock(rotateTo)
+   	    }
+    }
+    
+    var animateTransformString string = fmt.Sprintf("<animateTransform attributeName=\"transform\" type=\"rotate\" from=\"%f 0 0\" to=\"%f 0 0\" dur=\"2s\"/>\n", 
+    	rotateFrom, rotateTo)
+    
+    var pointerShaft string =  fmt.Sprintf("M 0,0  l %d,%d %d,%d %d,%d %d,%d %d,%d z", 
+    
+  	-halfWidth,
+  	0, 
+  	
+  	0,
+  	-int(pointerLength),
+  	
+  	halfWidth,
+  	-tip,
+  	
+  	halfWidth,
+  	tip,
+  	
+  	0,
+  	int(pointerLength))
+
+  	 
+  	
+  	
+  	// translate to pointer origin
+  	s.Translate( int(cx), int(cy))
+
+       s.Translate(0, 0) // fake rotate about a point with trans, rotate, trans -ve
+         s.RotateTranslate(-0, 0, rotateTo)
+         s.Path(pointerShaft, pointerShaftSyle)
+      
+         s.Writer.Write([]byte(animateTransformString))
+
+        s.Gend() 
+     s.Gend()
+     s.Gend() // origin translate
+     s.Circle(int(cx), int(cy), int(rPointerCircle), pointerCircleStyle);
+     
+}
+
+func toAntiClock(b float64) float64 {
+	return -(360.0 - b)
+}
