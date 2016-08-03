@@ -185,7 +185,7 @@ func RainHistoryGraph() string {
 		  x2 = timeToX(aTime2)
 		  y1 = valToY(float64(hist[i].Rain.Day), max, 0.0)
 		  y2 = valToY(float64(hist[i+1].Rain.Day), max, 0.0)
-//		  fmt.Println(x1, y1, x2, y2, float64(hist[i].Rain.Day), float64(hist[i+1].Rain.Day))
+		  fmt.Println(x1, y1, x2, y2, float64(hist[i].Rain.Day), float64(hist[i+1].Rain.Day))
 		  s.Line(x1, y1, x2, y2, rainDayHistoryLineStyle)
 
 		  y1 = valToY(float64(hist[i].Rain.Instant), max, 0.0)
@@ -267,7 +267,9 @@ func PressureHistoryGraph() string {
    if max < 5.0 {
 	  max = 5.0
    }
-   max = max * 1.01
+   max = max + 1.00
+	min = min - 1.00
+   fmt.Println("db.GetPressureHistory returned min %d\n", int(round(min)))
    grid24Hrs(s, int(round(max)), int(round(min)), chooseInterval(max, min)) 
    
    for i := 0; i<len(hist)-1; i++ {
@@ -283,8 +285,8 @@ func PressureHistoryGraph() string {
 		  x2 = timeToX(aTime2)
 	//	  fmt.Println(aTime1, x1,  aTime2, x2)
 	
-		  y1 = valToY(float64(hist[i].Pressure), max, 950.0)
-		  y2 = valToY(float64(hist[i+1].Pressure), max, 950.0)
+		  y1 = valToY(float64(hist[i].Pressure), max, min)
+		  y2 = valToY(float64(hist[i+1].Pressure), max, min)
           //fmt.Println(y1, y2)
 		  s.Line(x1, y1, x2, y2, pressureHistoryLineStyle)
 	   }

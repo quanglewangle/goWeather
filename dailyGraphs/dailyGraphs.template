@@ -1,16 +1,34 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
   <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed' rel='stylesheet' type='text/css'>
     <meta charset="utf-8">
-    <title>Pendeen and Portheras Cove Weather</title>
-    <meta name="description" content="Weather for Pendeen and Portheras Cove for walkers, gardeners and beach users">
+    <title>Pendeen weather</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <!--[if lte IE 8]><link rel="stylesheet" href="responsive-nav.css"><![endif]-->
     <!--[if gt IE 8]><!--><link rel="stylesheet" href="styles.css"><!--<![endif]-->
       <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>  
     <script src="responsive-nav.js"></script>
-    <style type="text/css">
+   
+   
+   
+   
+  <script>
+  $(function()
+  {
+  var intervalMS = 40000; // 40 seconds
+  setInterval(function(){
+   $("#hist").attr("src", "http://fimblefowl.co.uk:8081/hist?" + new Date().valueOf());
+   $("#windDirHist").attr("src", "http://fimblefowl.co.uk:8081/windDirHist?" + new Date().valueOf());
+  
+  
+  }, intervalMS);
+  });
+  </script>
+  
+  
+   <style type="text/css">
     body,div,
 h1,h2,p,
 ol,ul,li {
@@ -231,58 +249,53 @@ a:hover {
   
   
   
-  
-  
   </head>
   <body>
-    
+
     <div role="navigation" id="foo" class="nav-collapse">
-      <nav>
       <ul>
-        <li class="active"><a href="index.fcgi">Current Weather</a></li>
-        <li><a href="dailyGraphs.fcgi">Daily Graphs</a></li>
-        <li><a href="dayStats.php">Daily Tabular</a></li>
+        <li><a href="index.fcgi">Current Weather</a></li>
+        <li class = "active"><a href="dailyGraphs.fcgi">Daily Graphs</a></li>
+          <li><a href="dayStats.php">Daily Tablular</a></li>
         <li><a href="about.php">About</a></li>
       </ul>
-      <nav>
     </div>
 
     <div role="main" class="main">
       <a href="#nav" class="nav-toggle">Menu</a>
-        
-      <h1> <span itemscope itemtype="http://schema.org/Place">
-          <span itemprop="name">Pendeen</span>
-          <span itemprop="geo" itemscope itemtype="http://schema.org/GeoCoordinates">
-            <meta itemprop="latitude" content="50.1521" />
-            <meta itemprop="longitude" content="-5.6618" />
-          </span>
-        </span> Weather</h1>
-      <h3>Current Weather</h3>
-
-   <div class="aRow">
-      
-      <div class="onWindowShrinkMoveDown"> 
-             {{.WindSpeed}}          
-      </div>
-
-      <div class="onWindowShrinkMoveDown">
-         {{.WindDir}}     
-      </div>
-
-      <div class="onWindowShrinkMoveDown">
-         {{.Temperature}}     
-      </div>
-
-   <div class="onWindowShrinkMoveDown">
-     {{.Pressure}}     
-      </div>
-     
-    </div>
-   <p>Updated every 40s</p>
-   <p>If you are visiting Pendeen, check out <a href="http://pendeenwalks.co.uk"><span class="mailto">Pendeen Walks</span></a>, another quanglewangle.com site.</p>
+      <h1>Pendeen Weather</h1>
+      <h3>Graphs since midnight UTC</h3>
    
+   <div class="aRow">
+    <figure>
+     {{.WindSpeedHist}}
+    <figcaption>Wind speed since midnight UTC, knots, 6 minute average</figcaption>
+    </figure>
+</div>       
+   <div class="aRow">
+    <figure>
+     {{.WindDirHist}}
+    <figcaption>Wind direction since midnight UTC, 6 minute average</figcaption>
+    </figure>
+</div>
+    <div class="aRow">
+    <figure>
+      {{.RainHist}}
+    <figcaption>Rain mm</figcaption>
+    </figure>
+</div>
+  <div class="aRow">
+    <figure>
+      {{.PressureHist}}
+    <figcaption>Pressure hPa</figcaption>
+    </figure>
+</div>  
+<p>Updated every 6 minutes</p>
+
+    </div>  
     <script>
       var navigation = responsiveNav("foo", {customToggle: ".nav-toggle"});
     </script>
   </body>
 </html>
+h

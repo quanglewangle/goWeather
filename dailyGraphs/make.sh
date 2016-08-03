@@ -1,0 +1,1 @@
+go build -v -o  /var/www/respWeather/dailyGraphs.fcgi
