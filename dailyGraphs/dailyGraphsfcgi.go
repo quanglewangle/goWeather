@@ -7,7 +7,7 @@ import (
     "html/template"
     "os" 
     "os/signal"
-    "db2"
+    "github.com/quanglewangle/goWeather/db2"
     "runtime"
     "github.com/quanglewangle/goWeather/svgo1"
     "syscall" 
