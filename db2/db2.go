@@ -4,7 +4,7 @@ import ( "database/sql"
          _ "github.com/go-sql-driver/mysql"
 //	"strconv"
          "fmt"
-         "wx"
+         "github.com/quanglewangle/goWeather/wx"
 )
 
 var db *sql.DB
