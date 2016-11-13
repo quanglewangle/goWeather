@@ -1,7 +1,7 @@
 package svgo1
 
 import (
-   "db2"
+   "github.com/quanglewangle/goWeather/db2"
 //   "os"
 //   "xmldb"
    "math"
@@ -10,7 +10,7 @@ import (
    "fmt"
    "github.com/ajstarks/svgo"
    "time"
-   "wx"
+   "github.com/quanglewangle/goWeather/wx"
   
 )
 const DegToRad = 0.017453292519943295769236907684886127134428718885417 
@@ -246,6 +246,53 @@ func HistoryGraph() string {
    s.End()
    return string(buf.String())
 }
+
+func TemperatureHistoryGraph() string {
+   var aTime1, aTime2 time.Time
+   var hist []wx.CurrentWeather
+   var err error
+  // var hourNow = time.Time.Hour(time.Now())
+   var x1, y1, x2, y2 int
+  var max float64
+  var min float64
+  
+   buf := new(bytes.Buffer)
+   s := svg.New(buf)
+  
+   s.Start(int(size*2), int(size))
+   
+   s.Rect(int (gridBoarderWidth),int (gridBoarderWidth), int(gridInsideWidth)  , int (size - (gridBoarderWidth*2)), historyStyle)
+   
+   hist, max, min = db.GetTemperatureHistory()
+   max = max + 2.0
+   min = min - 2.0
+   grid24Hrs(s, int(round(max)), int(round(min)), chooseInterval(max, min))  
+   
+   for i := 0; i<len(hist)-1; i++ {
+       aTime1, err = time.Parse( time.RFC3339, hist[i].TimeStamp)
+	   aTime2, err = time.Parse( time.RFC3339, hist[i+1].TimeStamp)
+	   
+       if(err != nil) {
+	       fmt.Println(err)
+       } else {
+//          fmt.Println( aTime1.Format(time.RFC3339))
+
+		  x1 = timeToX(aTime1)
+		  x2 = timeToX(aTime2)
+//		  fmt.Println(aTime1, x1,  aTime2, x2)
+	
+		  y1 = valToY(float64(hist[i].Temp.Value), max, min)
+		  y2 = valToY(float64(hist[i+1].Temp.Value), max, min)
+		  s.Line(x1, y1, x2, y2, historyLineStyle)
+	   }
+	   
+   }
+   
+   s.End()
+   return string(buf.String())
+}
+
+
 
 func PressureHistoryGraph() string {
    var aTime1, aTime2 time.Time

@@ -18,7 +18,36 @@ func OpenDatabase() {
        fmt.Println(err)
     }
 }
+func GetCurrentSummary () wx.CurrentWeather {
+       
+    stmtOut, err := db.Prepare("SELECT " +
+                        " DATE_FORMAT(time_stamp, '%Y-%m-%dT%T+00:00') , " +
+                        " wind_speed_kt, " +
+                        " wind_dir_degree, " +
+                        " temp_c," +
+                        " pressure_hpa " +
+                        " FROM reading " +
+                        " ORDER BY time_stamp DESC LIMIT 1 ")
+    if err != nil {
+        panic(err.Error()) // proper error handling instead of panic in your app
+    }
+    defer stmtOut.Close()
 
+
+    var r wx.CurrentWeather
+    
+    err = stmtOut.QueryRow().Scan(&r.TimeStamp, &r.Wind.Speed, &r.Wind.Direction, &r.Temp.Value, &r.Pressure) // WHERE number = 13
+    if err != nil {
+        panic(err.Error()) // proper error handling instead of panic in your app
+    }
+     r.Temp.Unit = "C"
+     r.Wind.SpeedUnit = "knot"
+     r.Wind.DirectionUnit = "degreeT"
+     r.Rain.Unit = "mm"
+     return r
+    
+    
+}
 func GetHistory() ([]wx.CurrentWeather, float64) {
        const query string = "SELECT " +
                         " DATE_FORMAT(time_stamp, '%Y-%m-%dT%T+00:00') , " +
@@ -59,6 +88,65 @@ func GetHistory() ([]wx.CurrentWeather, float64) {
   //  fmt.Println(got)
     return got, maxWind
 }
+
+
+func GetTemperatureHistory() ([]wx.CurrentWeather, float64, float64) {
+       const query string = "SELECT " +
+                        " DATE_FORMAT(time_stamp, '%Y-%m-%dT%T+00:00') , " +
+                        " avg(temp_c) " +
+                        " FROM reading " +
+                        " WHERE DATE(time_stamp) = CURDATE() " +
+                        " GROUP BY " + 
+                        " round(UNIX_TIMESTAMP(time_stamp) / 180) "
+                        
+       const maxQuery string = "SELECT " +
+                        " max(temp_c) " +
+       
+                        " FROM reading " +
+                        " WHERE DATE(time_stamp) = CURDATE() "
+                        
+                        
+        const minQuery string = "SELECT " +
+                        " min(temp_c)" +
+       
+                        " FROM reading " +
+                        " WHERE DATE(time_stamp) = CURDATE() " 
+        var got []wx.CurrentWeather
+        var maxTemperature float64
+        var minTemperature float64
+        
+   // db, err := sql.Open("mysql", "demo:password@/weather")
+  //  db.parseTime=true
+   fmt.Println("query %v %v", query, err)
+    rows, err := db.Query(query)
+    if err != nil {
+       fmt.Println("query %v", err)
+    }
+   
+    for rows.Next() {
+            var r wx.CurrentWeather
+            err = rows.Scan(&r.TimeStamp, &r.Temp.Value)
+            if err != nil {
+                    fmt.Println("Scan: %v", err)
+            }
+            got = append(got, r)
+    }
+    err = db.QueryRow(maxQuery).Scan(&maxTemperature)
+    if err != nil {
+	    fmt.Println(err)
+    }
+    
+      err = db.QueryRow(minQuery).Scan(&minTemperature)
+    if err != nil {
+	    fmt.Println(err)
+    }
+  //  fmt.Println(got)
+    return got, maxTemperature, minTemperature
+    
+}
+
+
+
 
 func GetPressureAndTrend() (float64, int) {
   var pressure1 float64
@@ -101,12 +189,20 @@ func GetPressureAndTrend() (float64, int) {
 }
   
 func GetPressureHistory() ([]wx.CurrentWeather, float64, float64) {
-       const query string = "SELECT " +
+   /*    const query string = "SELECT " +
                         " DATE_FORMAT(time_stamp, '%Y-%m-%dT%T+00:00') , " +             
                         
                         " pressure_hpa " +
                         " FROM reading " +
-                        " WHERE DATE(time_stamp) = CURDATE() "
+                        " WHERE DATE(time_stamp) = CURDATE() "*/
+                        
+       const query string = "SELECT " +
+                        " DATE_FORMAT(time_stamp, '%Y-%m-%dT%T+00:00') , " +
+                        "pressure_hpa" +
+                        " FROM reading " +
+                        " WHERE DATE(time_stamp) = CURDATE() " +
+                        " GROUP BY " + 
+                        " round(UNIX_TIMESTAMP(time_stamp) / 500) "
                         
        const maxQuery string = "SELECT " +
                         " max(pressure_hpa)" +

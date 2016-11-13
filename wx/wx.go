@@ -8,12 +8,15 @@ type Temperature struct {
 type CurrentRain struct {
     Instant float64
     Day float64
+    Unit string
 }
 
 type CurrentWind struct {
     Speed float64 `xml:"speed"`
     Direction float64 `xml:"direction"`
     Gusts float64 `xml:"gusts"`
+    SpeedUnit string
+    DirectionUnit string
     
 }
 

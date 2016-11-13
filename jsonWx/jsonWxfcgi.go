@@ -4,38 +4,41 @@ package main
 import (
     "net/http" 
     "net/http/fcgi"
-    "html/template"
+  
+ //   "html/template"
     "os" 
     "os/signal"
+    "github.com/quanglewangle/goWeather/wx"
     "github.com/quanglewangle/goWeather/db2"
     "runtime"
-    "github.com/quanglewangle/goWeather/svgo1"
+  //  "github.com/quanglewangle/goWeather/svgo1"
  //   "github.com/quanglewangle/goWeather/zambra"
     "syscall" 
-    "time" 
+    "time"
+    "encoding/json"
   
 )
-
-type Diagrams struct {
-    WindDirHist     template.HTML
-    WindSpeedHist   template.HTML
-    RainHist        template.HTML
-    PressureHist    template.HTML
-    TemperatureHist template.HTML
+type Wx struct {
+  TemperatureC    float64
 }
 
 // a simple request handler
 func handler(w http.ResponseWriter, r *http.Request) {
     
     db.OpenDatabase()
-        
-    t, _ := template.ParseFiles("dailyGraphs.template")
-    t.Execute(w, Diagrams{WindSpeedHist:template.HTML( svgo1.HistoryGraph()),
-                          WindDirHist:template.HTML(svgo1.WindDirHistory()),
-                          RainHist:template.HTML(svgo1.RainHistoryGraph()),
-                          PressureHist:template.HTML(svgo1.PressureHistoryGraph()),
-                          TemperatureHist:template.HTML(svgo1.TemperatureHistoryGraph()),  
-                          })
+    
+    var wxRecord wx.CurrentWeather
+    wxRecord = db.GetCurrentSummary()
+
+    js, err := json.Marshal(wxRecord)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+
+  w.Header().Set("Content-Type", "application/json")
+  w.Write(js)
+
 }
 
 func main() {
